@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Search, BookOpen, ArrowUpRight, Menu, X, Moon, Sun, Sparkles, ShieldCheck, GraduationCap, BrainCircuit, Bot, Network, Atom, SlidersHorizontal, ChevronDown, Library, Mail, Code } from 'lucide-react';
+import { Search, BookOpen, ArrowUpRight, Menu, X, Moon, Sun, Sparkles, ShieldCheck, GraduationCap, BrainCircuit, Bot, Network, Atom, SlidersHorizontal, ChevronDown, Library, Mail, Code, Phone, UserRound } from 'lucide-react';
 import { courses } from './courses';
 import './styles.css';
 
@@ -12,6 +12,7 @@ const disciplines = [
   {name:'Management', icon:Network, note:'IPR, HR and organisational development'},
   {name:'Robotics', icon:Bot, note:'Robotics, sensors and intelligent systems'}
 ];
+const contact = {name:'Dr. V. Vaithianathan', email:'vnathanssn@gmail.com', phone:'+91 99625 74214', tel:'+919962574214'};
 const iconFor = (name) => ({'Computer Science':BrainCircuit,'Faculty Development':GraduationCap,'Humanities & Social Sciences':Sparkles,'Management':Network,'Robotics':Bot}[name] || BookOpen);
 
 function App(){
@@ -23,6 +24,8 @@ function App(){
   const [mobile,setMobile]=useState(false);
   const [selected,setSelected]=useState(null);
   const [page,setPage]=useState(1);
+  const [contactOpen,setContactOpen]=useState(false);
+  const openContact=()=>{setMobile(false);setContactOpen(true)};
   const pageSize=9;
   const categories=useMemo(()=>['All topics',...new Set(courses.map(c=>c.category))],[ ]);
   const filtered=useMemo(()=>courses.filter(c=>{
@@ -44,9 +47,9 @@ function App(){
         <span><strong>Nexa Learn</strong><small>Nathan's Knowledge Cafe</small></span>
       </a>
       <nav className="toplinks"><a href="#catalogue">Explore</a><a href="#about">About</a><a href="#learning">Learning paths</a></nav>
-      <div className="top-actions"><button className="icon-btn" aria-label="Toggle theme" onClick={()=>setDark(!dark)}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button><a className="signin" href="mailto:hello@nathansknowledgecafe.in">Contact <ArrowUpRight size={15}/></a><button className="icon-btn mobile-menu" aria-label="Open menu" onClick={()=>setMobile(!mobile)}>{mobile?<X/>:<Menu/>}</button></div>
+      <div className="top-actions"><button className="icon-btn" aria-label="Toggle theme" onClick={()=>setDark(!dark)}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button><button className="signin" onClick={openContact}>Contact <ArrowUpRight size={15}/></button><button className="icon-btn mobile-menu" aria-label="Open menu" onClick={()=>setMobile(!mobile)}>{mobile?<X/>:<Menu/>}</button></div>
     </header>
-    {mobile&&<div className="mobile-nav"><a href="#catalogue" onClick={()=>setMobile(false)}>Explore courses</a><a href="#about" onClick={()=>setMobile(false)}>About</a><a href="mailto:hello@nathansknowledgecafe.in">Contact</a></div>}
+    {mobile&&<div className="mobile-nav"><a href="#catalogue" onClick={()=>setMobile(false)}>Explore courses</a><a href="#about" onClick={()=>setMobile(false)}>About</a><button className="mobile-contact" onClick={openContact}>Contact</button></div>}
     <main>
       <section className="hero">
         <div className="hero-copy">
@@ -81,8 +84,9 @@ function App(){
       <section className="learning" id="learning"><div><div className="eyebrow muted">LEARNING, CONNECTED</div><h2>One platform.<br/><em>Many possibilities.</em></h2><p>Build foundations, explore advanced ideas and connect knowledge to practical challenges.</p></div><div className="learning-cards"><div><span className="mini-icon"><BrainCircuit/></span><h3>Explore emerging tech</h3><p>Artificial intelligence, machine learning, data science and cybersecurity.</p></div><div><span className="mini-icon"><GraduationCap/></span><h3>Strengthen teaching</h3><p>Pedagogy, assessment, technical communication and faculty development.</p></div><div><span className="mini-icon"><Bot/></span><h3>Build intelligent systems</h3><p>Robotics, sensors, actuators and engineering applications.</p></div></div></section>
       <section className="about" id="about"><div className="about-symbol"><Atom size={42}/></div><div><div className="eyebrow">ABOUT THE CAFE</div><h2>Curiosity is the beginning<br/>of every great idea.</h2><p>Nathan's Knowledge Cafe brings together structured courses and interdisciplinary learning resources in one accessible destination. The platform is designed to support students, educators, researchers and professionals as they keep learning and creating.</p></div></section>
     </main>
-    <footer><a className="brand footer-brand" href="#"><span className="brand-mark"><Sparkles size={18}/></span><span><strong>Nexa Learn</strong><small>Nathan's Knowledge Cafe</small></span></a><span>© {new Date().getFullYear()} Nathan's Knowledge Cafe. All rights reserved.</span><div><a href="mailto:hello@nathansknowledgecafe.in"><Mail size={16}/> Contact</a><a href="https://github.com/googleguru/Nathan-cafe"><Code size={16}/> GitHub</a></div></footer>
-    {selected&&<div className="modal-backdrop" role="presentation" onClick={()=>setSelected(null)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setSelected(null)} aria-label="Close"><X/></button><div className="eyebrow muted">{selected.discipline} · {selected.category}</div><h2 id="modal-title">{selected.title}</h2><p>{selected.description}</p><div className="modal-meta"><span>{selected.session==='Both'?'January and July sessions':selected.session+' session'}</span><span>Course information</span></div><p className="modal-note">Course enrolment, fees, instructor details and learning materials will be published after the course administrator adds verified information.</p><a className="primary-btn" href="mailto:hello@nathansknowledgecafe.in?subject=Course%20enquiry">Enquire about this course <ArrowUpRight size={16}/></a></section></div>}
+    <footer><a className="brand footer-brand" href="#"><span className="brand-mark"><Sparkles size={18}/></span><span><strong>Nexa Learn</strong><small>Nathan's Knowledge Cafe</small></span></a><span>© {new Date().getFullYear()} Nathan's Knowledge Cafe. All rights reserved.</span><div><button className="footer-contact" onClick={openContact}><Mail size={16}/> Contact</button><a href="https://github.com/googleguru/Nathan-cafe"><Code size={16}/> GitHub</a></div></footer>
+    {selected&&<div className="modal-backdrop" role="presentation" onClick={()=>setSelected(null)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setSelected(null)} aria-label="Close"><X/></button><div className="eyebrow muted">{selected.discipline} · {selected.category}</div><h2 id="modal-title">{selected.title}</h2><p>{selected.description}</p><div className="modal-meta"><span>{selected.session==='Both'?'January and July sessions':selected.session+' session'}</span><span>Course information</span></div><p className="modal-note">Course enrolment, fees, instructor details and learning materials will be published after the course administrator adds verified information.</p><a className="primary-btn" href={`mailto:${contact.email}?subject=${encodeURIComponent('Course enquiry: '+selected.title)}`}>Enquire about this course <ArrowUpRight size={16}/></a></section></div>}
+    {contactOpen&&<div className="modal-backdrop" role="presentation" onClick={()=>setContactOpen(false)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="contact-title" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setContactOpen(false)} aria-label="Close"><X/></button><div className="eyebrow muted">Contact</div><h2 id="contact-title">Get in touch</h2><ul className="contact-list"><li><UserRound size={18}/><span><small>Name</small>{contact.name}</span></li><li><Mail size={18}/><span><small>Email</small><a href={`mailto:${contact.email}`}>{contact.email}</a></span></li><li><Phone size={18}/><span><small>Mobile</small><a href={`tel:${contact.tel}`}>{contact.phone}</a></span></li></ul><a className="primary-btn" href={`mailto:${contact.email}`}>Send an email <ArrowUpRight size={16}/></a></section></div>}
   </div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
