@@ -1,92 +1,200 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Search, BookOpen, ArrowUpRight, Menu, X, Moon, Sun, Sparkles, ShieldCheck, GraduationCap, BrainCircuit, Bot, Network, Atom, SlidersHorizontal, ChevronDown, Library, Mail, Code, Phone, UserRound } from 'lucide-react';
+import { Search, ArrowUpRight, ArrowRight, ArrowLeft, Menu, X, Moon, Sun, ChevronDown, Mail, Phone } from 'lucide-react';
+import '@fontsource-variable/fraunces/opsz.css';
+import '@fontsource-variable/fraunces/opsz-italic.css';
+import '@fontsource-variable/hanken-grotesk';
 import { courses } from './courses';
 import './styles.css';
 
-const disciplines = [
-  {name:'All courses', icon:Library, note:'Explore the complete catalogue'},
-  {name:'Computer Science', icon:BrainCircuit, note:'AI, data science and cybersecurity'},
-  {name:'Faculty Development', icon:GraduationCap, note:'Teaching, assessment and IPR'},
-  {name:'Humanities & Social Sciences', icon:Sparkles, note:'Psychology and wellbeing'},
-  {name:'Management', icon:Network, note:'IPR, HR and organisational development'},
-  {name:'Robotics', icon:Bot, note:'Robotics, sensors and intelligent systems'}
-];
 const contact = {name:'Dr. V. Vaithianathan', email:'vnathanssn@gmail.com', phone:'+91 99625 74214', tel:'+919962574214'};
-const iconFor = (name) => ({'Computer Science':BrainCircuit,'Faculty Development':GraduationCap,'Humanities & Social Sciences':Sparkles,'Management':Network,'Robotics':Bot}[name] || BookOpen);
+
+const disciplines = [
+  {name:'Computer Science', note:'Artificial intelligence, machine learning, data science and cybersecurity.'},
+  {name:'Faculty Development', note:'Pedagogy, assessment, technical writing and intellectual property.'},
+  {name:'Humanities & Social Sciences', note:'Psychology, behaviour and wellbeing.'},
+  {name:'Management', note:'Intellectual property, human resources and organisational development.'},
+  {name:'Robotics', note:'Robotic systems, sensors, actuators and engineering applications.'}
+];
+const countBy = (key) => courses.reduce((m,c)=>(m[c[key]]=(m[c[key]]||0)+1,m),{});
+const disciplineCounts = countBy('discipline');
+const subjects = [...new Set(courses.map(c=>c.category))];
+const sessionLabel = (s) => s==='Both' ? 'January & July' : s;
+const pad = (n) => String(n).padStart(2,'0');
 
 function App(){
   const [query,setQuery]=useState('');
-  const [discipline,setDiscipline]=useState('All courses');
-  const [session,setSession]=useState('All sessions');
-  const [category,setCategory]=useState('All topics');
+  const [discipline,setDiscipline]=useState('All');
+  const [session,setSession]=useState('All');
+  const [category,setCategory]=useState('All subjects');
   const [dark,setDark]=useState(false);
   const [mobile,setMobile]=useState(false);
   const [selected,setSelected]=useState(null);
-  const [page,setPage]=useState(1);
   const [contactOpen,setContactOpen]=useState(false);
-  const openContact=()=>{setMobile(false);setContactOpen(true)};
+  const [page,setPage]=useState(1);
   const pageSize=9;
-  const categories=useMemo(()=>['All topics',...new Set(courses.map(c=>c.category))],[ ]);
+
   const filtered=useMemo(()=>courses.filter(c=>{
     const q=query.toLowerCase().trim();
-    return (discipline==='All courses'||c.discipline===discipline)
-      && (session==='All sessions'||c.session===session||c.session==='Both')
-      && (category==='All topics'||c.category===category)
+    return (discipline==='All'||c.discipline===discipline)
+      && (session==='All'||c.session===session||c.session==='Both')
+      && (category==='All subjects'||c.category===category)
       && (!q||[c.title,c.description,c.category,c.discipline].join(' ').toLowerCase().includes(q));
   }),[query,discipline,session,category]);
   const pages=Math.max(1,Math.ceil(filtered.length/pageSize));
   const shown=filtered.slice((page-1)*pageSize,page*pageSize);
-  const chooseDiscipline=(d)=>{setDiscipline(d);setPage(1);setMobile(false);setSelected(null)};
-  const chooseSession=(s)=>{setSession(s);setPage(1)};
-  const chooseCategory=(s)=>{setCategory(s);setPage(1)};
+
+  const reset=(fn)=>(v)=>{fn(v);setPage(1)};
+  const chooseDiscipline=reset(setDiscipline), chooseSession=reset(setSession), chooseCategory=reset(setCategory);
+  const openContact=()=>{setMobile(false);setContactOpen(true)};
+  const clearAll=()=>{setQuery('');setDiscipline('All');setSession('All');setCategory('All subjects');setPage(1)};
+  const goToCatalogue=(d)=>{clearAll();if(d)setDiscipline(d);document.getElementById('catalogue')?.scrollIntoView({behavior:'smooth'})};
+  const turnPage=(p)=>{setPage(p);document.getElementById('catalogue')?.scrollIntoView({behavior:'smooth'})};
+
+  useEffect(()=>{
+    const onKey=(e)=>{if(e.key==='Escape'){setSelected(null);setContactOpen(false)}};
+    window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
+  },[]);
+  useEffect(()=>{document.documentElement.style.colorScheme=dark?'dark':'light'},[dark]);
+
   return <div className={dark?'app dark':'app'}>
     <header className="topbar">
-      <a className="brand" href="#" onClick={()=>{setSelected(null);chooseDiscipline('All courses')}}>
-        <span className="brand-mark"><Sparkles size={19}/></span>
-        <span><strong>Nexa Learn</strong><small>Nathan's Knowledge Cafe</small></span>
+      <a className="brand" href="#top" onClick={()=>setMobile(false)}>
+        <span className="monogram" aria-hidden="true">N</span>
+        <span className="wordmark"><strong>Nathan’s Knowledge Cafe</strong><small>Nexa Learn</small></span>
       </a>
-      <nav className="toplinks"><a href="#catalogue">Explore</a><a href="#about">About</a><a href="#learning">Learning paths</a></nav>
-      <div className="top-actions"><button className="icon-btn" aria-label="Toggle theme" onClick={()=>setDark(!dark)}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button><button className="signin" onClick={openContact}>Contact <ArrowUpRight size={15}/></button><button className="icon-btn mobile-menu" aria-label="Open menu" onClick={()=>setMobile(!mobile)}>{mobile?<X/>:<Menu/>}</button></div>
+      <nav className="toplinks" aria-label="Primary"><a href="#catalogue">Catalogue</a><a href="#disciplines">Disciplines</a><a href="#about">About</a></nav>
+      <div className="top-actions">
+        <button className="icon-btn" aria-label={dark?'Switch to light theme':'Switch to dark theme'} onClick={()=>setDark(!dark)}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button>
+        <button className="contact-btn" onClick={openContact}>Contact</button>
+        <button className="icon-btn mobile-menu" aria-label="Menu" aria-expanded={mobile} onClick={()=>setMobile(!mobile)}>{mobile?<X size={19}/>:<Menu size={19}/>}</button>
+      </div>
     </header>
-    {mobile&&<div className="mobile-nav"><a href="#catalogue" onClick={()=>setMobile(false)}>Explore courses</a><a href="#about" onClick={()=>setMobile(false)}>About</a><button className="mobile-contact" onClick={openContact}>Contact</button></div>}
-    <main>
+    {mobile&&<nav className="mobile-nav" aria-label="Mobile"><a href="#catalogue" onClick={()=>setMobile(false)}>Catalogue</a><a href="#disciplines" onClick={()=>setMobile(false)}>Disciplines</a><a href="#about" onClick={()=>setMobile(false)}>About</a><button onClick={openContact}>Contact</button></nav>}
+
+    <main id="top">
       <section className="hero">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="pulse"></span> A space for curious minds</div>
-          <h1>Knowledge that moves<br/><em>you forward.</em></h1>
-          <p>Explore thoughtfully curated learning across artificial intelligence, computer science, cybersecurity, faculty development, management and robotics.</p>
-          <div className="hero-actions"><a className="primary-btn" href="#catalogue">Explore courses <ArrowUpRight size={17}/></a><a className="text-btn" href="#about">Discover the cafe <span>→</span></a></div>
-          <div className="hero-proof"><div className="proof-icons"><span>AI</span><span>CS</span><span>R</span></div><span>Learn with purpose. Build with confidence.</span></div>
+          <p className="kicker">Course catalogue · January &amp; July sessions</p>
+          <h1>A reading room for <em>curious</em> minds.</h1>
+          <p className="lede">A considered selection of courses in computing, teaching practice, the social sciences, management and robotics — chosen for learners who want depth rather than noise.</p>
+          <div className="hero-actions">
+            <a className="btn btn-ink" href="#catalogue">Browse the catalogue <ArrowRight size={17}/></a>
+            <button className="btn btn-line" onClick={openContact}>Speak with us</button>
+          </div>
         </div>
-        <div className="hero-art" aria-label="Abstract learning network illustration">
-          <div className="orbit orbit-one"></div><div className="orbit orbit-two"></div>
-          <div className="art-core"><BrainCircuit size={52} strokeWidth={1.25}/><span>IDEAS<br/>IN MOTION</span></div>
-          <div className="float-card card-ai"><BrainCircuit size={17}/><span>Artificial Intelligence</span></div>
-          <div className="float-card card-data"><Network size={17}/><span>Data & Discovery</span></div>
-          <div className="float-card card-robot"><Bot size={17}/><span>Robotics</span></div>
-          <div className="spark s1">✳</div><div className="spark s2">✦</div><div className="spark s3">·</div>
-        </div>
+        <aside className="ledger" aria-label="Catalogue at a glance">
+          <p className="ledger-title">At a glance</p>
+          <dl>
+            <div><dt>Courses</dt><dd>{courses.length}</dd></div>
+            <div><dt>Disciplines</dt><dd>{pad(disciplines.length)}</dd></div>
+            <div><dt>Subjects</dt><dd>{subjects.length}</dd></div>
+            <div><dt>Sessions a year</dt><dd>02</dd></div>
+          </dl>
+          <button className="ledger-foot" onClick={openContact}><span>Enquiries</span><strong>{contact.name}</strong><ArrowUpRight size={16}/></button>
+        </aside>
       </section>
-      <section className="trust-strip"><div><ShieldCheck size={18}/><span>Security-conscious by design</span></div><div><BookOpen size={18}/><span>Curated academic catalogue</span></div><div><Sparkles size={18}/><span>Built for lifelong learning</span></div></section>
+
+      <section className="disciplines" id="disciplines">
+        <div className="section-head">
+          <p className="kicker">Fields of study</p>
+          <h2>Five disciplines, <em>one library.</em></h2>
+        </div>
+        <ol className="discipline-index">
+          {disciplines.map((d,i)=><li key={d.name}><button onClick={()=>goToCatalogue(d.name)}>
+            <span className="d-num">{pad(i+1)}</span>
+            <span className="d-name">{d.name}</span>
+            <span className="d-note">{d.note}</span>
+            <span className="d-count">{disciplineCounts[d.name]} courses <ArrowRight size={16}/></span>
+          </button></li>)}
+        </ol>
+      </section>
+
       <section className="catalogue" id="catalogue">
-        <div className="section-head"><div><div className="eyebrow muted">THE KNOWLEDGE LIBRARY</div><h2>Find your next <em>breakthrough.</em></h2><p>Browse the catalogue and choose a direction for your learning journey.</p></div><div className="count-pill"><strong>{filtered.length}</strong> courses</div></div>
+        <div className="section-head row">
+          <div><p className="kicker">The catalogue</p><h2>Find your next <em>course.</em></h2></div>
+          <p className="count"><strong>{filtered.length}</strong> of {courses.length} courses</p>
+        </div>
         <div className="catalogue-layout">
-          <aside className="sidebar"><div className="side-title">DISCIPLINES</div>{disciplines.map(({name,icon:Icon,note})=><button key={name} className={'discipline '+(discipline===name?'active':'')} onClick={()=>chooseDiscipline(name)}><Icon size={18}/><span>{name}<small>{note}</small></span></button>)}<div className="side-divider"></div><div className="side-title">TOPIC</div><div className="select-wrap"><select value={category} onChange={e=>chooseCategory(e.target.value)}>{categories.map(c=><option key={c}>{c}</option>)}</select><ChevronDown size={15}/></div></aside>
-          <div className="course-area">
-            <div className="filters"><label className="searchbox"><Search size={18}/><input value={query} onChange={e=>{setQuery(e.target.value);setPage(1)}} placeholder="Search courses, skills or topics..." aria-label="Search courses"/>{query&&<button onClick={()=>setQuery('')} aria-label="Clear search"><X size={15}/></button>}</label><div className="session-tabs">{['All sessions','January','July'].map(s=><button key={s} onClick={()=>chooseSession(s)} className={session===s?'chosen':''}>{s==='All sessions'?'All':s}</button>)}</div></div>
-            <div className="results-line"><span>{filtered.length?`Showing ${(page-1)*pageSize+1}–${Math.min(page*pageSize,filtered.length)} of ${filtered.length} courses`:'No matching courses'}</span><span className="sort-label"><SlidersHorizontal size={14}/> Curated catalogue</span></div>
-            {shown.length?<div className="course-grid">{shown.map(course=>{const Icon=iconFor(course.discipline);return <article className="course-card" key={course.id}><div className="course-top"><span className="course-icon"><Icon size={20}/></span><span className="course-session">{course.session==='Both'?'JAN + JUL':course.session.toUpperCase()}</span></div><div className="course-category">{course.discipline} <span>·</span> {course.category}</div><h3>{course.title}</h3><p>{course.description}</p><button className="course-link" onClick={()=>setSelected(course)}>Course overview <ArrowUpRight size={16}/></button></article>})}</div>:<div className="empty"><Search size={26}/><h3>No courses found</h3><p>Try another search term or clear one of the filters.</p><button className="primary-btn" onClick={()=>{setQuery('');chooseDiscipline('All courses');chooseSession('All sessions');chooseCategory('All topics')}}>Clear filters</button></div>}
-            {pages>1&&<div className="pagination"><button disabled={page===1} onClick={()=>setPage(page-1)}>Previous</button><span>Page {page} of {pages}</span><button disabled={page===pages} onClick={()=>setPage(page+1)}>Next</button></div>}
+          <aside className="filters" aria-label="Filters">
+            <label className="search"><Search size={17}/><input value={query} onChange={e=>{setQuery(e.target.value);setPage(1)}} placeholder="Search by title or topic" aria-label="Search courses"/>{query&&<button onClick={()=>setQuery('')} aria-label="Clear search"><X size={15}/></button>}</label>
+            <div className="filter-group">
+              <p className="filter-label">Session</p>
+              <div className="segmented">{['All','January','July'].map(s=><button key={s} className={session===s?'on':''} onClick={()=>chooseSession(s)}>{s}</button>)}</div>
+            </div>
+            <div className="filter-group">
+              <p className="filter-label">Discipline</p>
+              <ul className="discipline-filter">
+                <li><button className={discipline==='All'?'on':''} onClick={()=>chooseDiscipline('All')}><span>All disciplines</span><span>{courses.length}</span></button></li>
+                {disciplines.map(d=><li key={d.name}><button className={discipline===d.name?'on':''} onClick={()=>chooseDiscipline(d.name)}><span>{d.name}</span><span>{disciplineCounts[d.name]}</span></button></li>)}
+              </ul>
+            </div>
+            <div className="filter-group">
+              <p className="filter-label">Subject</p>
+              <div className="select"><select value={category} onChange={e=>chooseCategory(e.target.value)} aria-label="Subject">{['All subjects',...subjects].map(c=><option key={c}>{c}</option>)}</select><ChevronDown size={15}/></div>
+            </div>
+          </aside>
+          <div className="results">
+            {shown.length?<div className="course-grid">{shown.map(course=><article className="course" key={course.id}>
+              <button onClick={()=>setSelected(course)} aria-label={`Open overview of ${course.title}`}>
+                <span className="course-meta"><span className="course-no">No. {pad(course.id)}</span><span>{sessionLabel(course.session)}</span></span>
+                <span className="course-field">{course.discipline} — {course.category}</span>
+                <h3>{course.title}</h3>
+                <p>{course.description}</p>
+                <span className="course-more">Overview <ArrowUpRight size={15}/></span>
+              </button>
+            </article>)}</div>
+            :<div className="empty"><h3>Nothing matches that search.</h3><p>Try a broader term, or clear the filters to see the full catalogue.</p><button className="btn btn-line" onClick={clearAll}>Clear filters</button></div>}
+            {pages>1&&<nav className="pagination" aria-label="Pages">
+              <button disabled={page===1} onClick={()=>turnPage(page-1)}><ArrowLeft size={15}/> Previous</button>
+              <span><em>{page}</em> of {pages}</span>
+              <button disabled={page===pages} onClick={()=>turnPage(page+1)}>Next <ArrowRight size={15}/></button>
+            </nav>}
           </div>
         </div>
       </section>
-      <section className="learning" id="learning"><div><div className="eyebrow muted">LEARNING, CONNECTED</div><h2>One platform.<br/><em>Many possibilities.</em></h2><p>Build foundations, explore advanced ideas and connect knowledge to practical challenges.</p></div><div className="learning-cards"><div><span className="mini-icon"><BrainCircuit/></span><h3>Explore emerging tech</h3><p>Artificial intelligence, machine learning, data science and cybersecurity.</p></div><div><span className="mini-icon"><GraduationCap/></span><h3>Strengthen teaching</h3><p>Pedagogy, assessment, technical communication and faculty development.</p></div><div><span className="mini-icon"><Bot/></span><h3>Build intelligent systems</h3><p>Robotics, sensors, actuators and engineering applications.</p></div></div></section>
-      <section className="about" id="about"><div className="about-symbol"><Atom size={42}/></div><div><div className="eyebrow">ABOUT THE CAFE</div><h2>Curiosity is the beginning<br/>of every great idea.</h2><p>Nathan's Knowledge Cafe brings together structured courses and interdisciplinary learning resources in one accessible destination. The platform is designed to support students, educators, researchers and professionals as they keep learning and creating.</p></div></section>
+
+      <section className="about" id="about">
+        <blockquote>Curiosity is the beginning of every great idea.</blockquote>
+        <div className="about-copy">
+          <p className="kicker">About the cafe</p>
+          <p>Nathan’s Knowledge Cafe gathers structured courses and interdisciplinary learning resources in one quiet, accessible place. It is meant for students, educators, researchers and working professionals who want to keep learning — and to put what they learn to use.</p>
+          <p>Every course in the catalogue runs in the January session, the July session, or both. For questions about a course or the cafe, write or call directly.</p>
+          <button className="btn btn-line" onClick={openContact}>Get in touch <ArrowUpRight size={16}/></button>
+        </div>
+      </section>
     </main>
-    <footer><a className="brand footer-brand" href="#"><span className="brand-mark"><Sparkles size={18}/></span><span><strong>Nexa Learn</strong><small>Nathan's Knowledge Cafe</small></span></a><span>© {new Date().getFullYear()} Nathan's Knowledge Cafe. All rights reserved.</span><div><button className="footer-contact" onClick={openContact}><Mail size={16}/> Contact</button><a href="https://github.com/googleguru/Nathan-cafe"><Code size={16}/> GitHub</a></div></footer>
-    {selected&&<div className="modal-backdrop" role="presentation" onClick={()=>setSelected(null)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setSelected(null)} aria-label="Close"><X/></button><div className="eyebrow muted">{selected.discipline} · {selected.category}</div><h2 id="modal-title">{selected.title}</h2><p>{selected.description}</p><div className="modal-meta"><span>{selected.session==='Both'?'January and July sessions':selected.session+' session'}</span><span>Course information</span></div><p className="modal-note">Course enrolment, fees, instructor details and learning materials will be published after the course administrator adds verified information.</p><a className="primary-btn" href={`mailto:${contact.email}?subject=${encodeURIComponent('Course enquiry: '+selected.title)}`}>Enquire about this course <ArrowUpRight size={16}/></a></section></div>}
-    {contactOpen&&<div className="modal-backdrop" role="presentation" onClick={()=>setContactOpen(false)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="contact-title" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setContactOpen(false)} aria-label="Close"><X/></button><div className="eyebrow muted">Contact</div><h2 id="contact-title">Get in touch</h2><ul className="contact-list"><li><UserRound size={18}/><span><small>Name</small>{contact.name}</span></li><li><Mail size={18}/><span><small>Email</small><a href={`mailto:${contact.email}`}>{contact.email}</a></span></li><li><Phone size={18}/><span><small>Mobile</small><a href={`tel:${contact.tel}`}>{contact.phone}</a></span></li></ul><a className="primary-btn" href={`mailto:${contact.email}`}>Send an email <ArrowUpRight size={16}/></a></section></div>}
+
+    <footer>
+      <div className="footer-top">
+        <div className="footer-brand"><span className="monogram" aria-hidden="true">N</span><p>Nathan’s Knowledge Cafe<small>Nexa Learn</small></p></div>
+        <div className="footer-col"><p className="filter-label">Explore</p><a href="#catalogue">Catalogue</a><a href="#disciplines">Disciplines</a><a href="#about">About</a><a href="https://github.com/googleguru/Nathan-cafe">Source on GitHub</a></div>
+        <div className="footer-col"><p className="filter-label">Correspondence</p><span>{contact.name}</span><a href={`mailto:${contact.email}`}>{contact.email}</a><a href={`tel:${contact.tel}`}>{contact.phone}</a></div>
+      </div>
+      <div className="footer-base"><span>© {new Date().getFullYear()} Nathan’s Knowledge Cafe. All rights reserved.</span><a href="#top">Back to top ↑</a></div>
+    </footer>
+
+    {selected&&<div className="overlay" role="presentation" onClick={()=>setSelected(null)}><section className="sheet" role="dialog" aria-modal="true" aria-labelledby="course-title" onClick={e=>e.stopPropagation()}>
+      <button className="sheet-close" onClick={()=>setSelected(null)} aria-label="Close"><X size={19}/></button>
+      <p className="kicker">No. {pad(selected.id)} · {selected.discipline}</p>
+      <h2 id="course-title">{selected.title}</h2>
+      <p className="sheet-lede">{selected.description}</p>
+      <dl className="sheet-facts"><div><dt>Subject</dt><dd>{selected.category}</dd></div><div><dt>Session</dt><dd>{sessionLabel(selected.session)}</dd></div></dl>
+      <p className="sheet-note">Enrolment details, fees, instructors and materials will be published once the course administrator confirms them.</p>
+      <a className="btn btn-ink" href={`mailto:${contact.email}?subject=${encodeURIComponent('Course enquiry: '+selected.title)}`}>Enquire about this course <ArrowUpRight size={16}/></a>
+    </section></div>}
+
+    {contactOpen&&<div className="overlay" role="presentation" onClick={()=>setContactOpen(false)}><section className="sheet" role="dialog" aria-modal="true" aria-labelledby="contact-title" onClick={e=>e.stopPropagation()}>
+      <button className="sheet-close" onClick={()=>setContactOpen(false)} aria-label="Close"><X size={19}/></button>
+      <p className="kicker">Contact</p>
+      <h2 id="contact-title">{contact.name}</h2>
+      <p className="sheet-lede">For course enquiries, sessions and anything else about the cafe.</p>
+      <ul className="contact-list">
+        <li><Mail size={17}/><span><small>Email</small><a href={`mailto:${contact.email}`}>{contact.email}</a></span></li>
+        <li><Phone size={17}/><span><small>Mobile</small><a href={`tel:${contact.tel}`}>{contact.phone}</a></span></li>
+      </ul>
+      <a className="btn btn-ink" href={`mailto:${contact.email}`}>Write an email <ArrowUpRight size={16}/></a>
+    </section></div>}
   </div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
