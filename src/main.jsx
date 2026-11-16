@@ -7,7 +7,7 @@ import '@fontsource-variable/hanken-grotesk';
 import { courses } from './courses';
 import './styles.css';
 
-const contact = {name:'Dr. V. Vaithianathan', email:'vnathanssn@gmail.com', phone:'+91 99625 74214', tel:'+919962574214'};
+const contact = {name:'Dr. V. Vaithianathan', email:'nathansklcafe@gmail.com', phone:'+91 99625 74214', tel:'+919962574214'};
 
 const disciplines = [
   {name:'Computer Science', note:'Artificial intelligence, machine learning, data science and cybersecurity.'},
